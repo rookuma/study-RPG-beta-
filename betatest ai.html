@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0e7a6d">
+<meta name="description" content="ミリプロ（Million Production）所属タレントの配信予定を一元化する非公式ファンプロトタイプ — 静的PWA版（1ファイル）">
+<link rel="icon" href="data:,">
+<title>ミリプロカレンダー静的PWA版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --surface2:#efede7; --ink:#1a2220; --muted:#68736e;
+  --line:#ddd9cf; --accent:#0e7a6d; --accent-ink:#fff; --accent-soft:#e0f2ee;
+  --live:#d92d20; --warn-bg:#fef3c7; --warn-ink:#92400e; --off-bg:#e6e9e7; --off-ink:#52605a;
+  --sample-bg:#fff4e5; --sample-ink:#8a4b12; --radius:14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121615; --surface:#1c2220; --surface2:#242c29; --ink:#edf2ef; --muted:#9aa8a2;
+    --line:#333d39; --accent:#2ebdA6; --accent:#2ebda6; --accent-ink:#06231e; --accent-soft:#173a34;
+    --warn-bg:#3a2f14; --warn-ink:#fbbf24; --off-bg:#2a3330; --off-ink:#aebbb5;
+    --sample-bg:#3a2a14; --sample-ink:#fbbf24;
+    color-scheme: dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Noto Sans JP",system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+button,[role="button"],select,summary,input:not([type="checkbox"]){min-height:44px}
+a{color:var(--accent)}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header.top{padding:28px 0 8px}
+header.top .eyebrow{font-size:.78rem;letter-spacing:.08em;font-weight:700;color:var(--accent);text-transform:uppercase}
+header.top h1{font-size:1.85rem;line-height:1.25;margin:.3rem 0 .4rem;font-weight:800;letter-spacing:-.01em}
+header.top p.lead{margin:0;color:var(--muted);max-width:640px}
+.unofficial{display:inline-flex;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;font-weight:700}
+.notice{margin-top:12px;background:var(--accent-soft);border-radius:10px;padding:10px 14px;font-size:.88rem}
+.notice strong{color:var(--accent)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:.55rem 1rem;font:inherit;font-size:.92rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;min-height:44px;text-decoration:none}
+.btn:hover{border-color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-small{min-height:38px;padding:.3rem .7rem;font-size:.82rem;border-radius:8px}
+.btn-danger{color:#b42318}
+main{padding-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:16px 0}
+.card h2{margin:0 0 10px;font-size:1.08rem;font-weight:800}
+.card h2 .sub{font-weight:400;color:var(--muted);font-size:.85rem}
+.summary-lines p{margin:.3rem 0}
+.summary-lines p:first-child{font-weight:700}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.seg{display:inline-flex;background:var(--surface2);border-radius:999px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:.45rem 1rem;font:inherit;font-weight:700;cursor:pointer;min-height:40px;color:var(--muted)}
+.seg button.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.check{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:8px 4px;min-height:44px;font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.select-wrap{display:inline-flex;align-items:center;gap:.5rem;font-weight:600}
+.select-wrap select, .form-grid select, .form-grid input[type="text"], .form-grid input[type="url"], .form-grid input[type="date"], .form-grid input[type="time"], .form-grid input[type="number"]{font:inherit;padding:.5rem .6rem;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);width:100%}
+.select-wrap select{width:auto}
+.talent-list{display:flex;flex-wrap:wrap;gap:8px}
+.talent-chip{display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--line);border-radius:999px;padding:.35rem .45rem .35rem .7rem;font-size:.88rem;background:var(--surface)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.t-group{color:var(--muted);font-size:.72rem}
+.star{border:0;background:transparent;font-size:1.15rem;cursor:pointer;min-width:36px;min-height:36px;border-radius:50%;color:#b9beb9;line-height:1}
+.star.on{color:#e8a100}
+.section-title{font-size:1.08rem;font-weight:800;margin:22px 0 10px}
+.section-title .date{color:var(--muted);font-weight:400;font-size:.9rem}
+.event-list{display:flex;flex-direction:column;gap:10px}
+.event-card{background:var(--surface);border:1px solid var(--line);border-left:6px solid #ccc;border-radius:12px;padding:13px 15px}
+.event-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.e-time{font-weight:800;font-variant-numeric:tabular-nums;font-size:1.02rem}
+.e-title{font-weight:700}
+.event-meta{color:var(--muted);font-size:.84rem;display:flex;gap:.35rem .7rem;flex-wrap:wrap;margin-top:3px}
+.event-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.badge{display:inline-block;border-radius:999px;padding:.08rem .6rem;font-size:.72rem;font-weight:700;background:var(--accent-soft);color:var(--accent)}
+.badge-live{background:var(--live);color:#fff}
+.badge-up{background:#067647;color:#fff}
+.badge-change{background:var(--warn-bg);color:var(--warn-ink)}
+.badge-off{background:var(--off-bg);color:var(--off-ink)}
+.badge-sample{background:var(--sample-bg);color:var(--sample-ink);border:1px dashed currentColor}
+.empty{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:20px;text-align:center}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.week-day{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px;min-height:112px}
+.week-day.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft) inset}
+.week-day h3{margin:0 0 6px;font-size:.82rem}
+.week-event{font-size:.74rem;border-left:4px solid #ccc;padding:2px 0 2px 6px;margin-bottom:7px;cursor:pointer;background:none;border-top:0;border-right:0;border-bottom:0;text-align:left;font:inherit;width:100%;color:var(--ink)}
+.week-event .wt{font-weight:800}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.form-grid label{display:flex;flex-direction:column;gap:.3rem;font-size:.88rem;font-weight:600}
+.form-grid label.check{flex-direction:row;align-items:center;align-self:end;font-weight:600}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+textarea{width:100%;font:inherit;padding:.65rem;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.hint{color:var(--muted);font-size:.87rem}
+.ai-preview{border:1px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:13px 15px;margin-top:12px}
+.ai-preview h3{margin:.1rem 0 .5rem;font-size:1rem}
+.status-list{margin:.4rem 0;padding-left:1.2rem}
+.status-list li{margin:.25rem 0}
+.banner{display:none;background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 14px;font-size:.9rem;font-weight:600;margin:12px 0}
+.banner.show{display:block}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-size:.9rem;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw;text-align:center}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:70;padding:16px}
+.modal-box{background:var(--surface);color:var(--ink);border-radius:14px;padding:20px;max-width:420px;width:100%;border:1px solid var(--line)}
+.modal-box p{margin:0 0 16px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+.kv div{background:var(--surface2);border-radius:10px;padding:12px 14px}
+.kv div b{display:block;margin-bottom:2px}
+.kv div span{font-size:.85rem;color:var(--muted)}
+footer{padding:10px 0 40px;color:var(--muted);font-size:.83rem}
+.hidden{display:none!important}
+input[type="file"]{font:inherit}
+.img-preview{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:10px}
+@media (max-width:760px){
+  .week-grid{grid-template-columns:1fr}
+  .week-day{min-height:0}
+  header.top h1{font-size:1.5rem}
+  .card{padding:15px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<link rel="manifest" href="blob:null/b65cdf33-1fa2-4da1-8c2e-2148f8d9b88c"></head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Static PWA — 1ファイル版</div>
+  <h1>ミリプロカレンダー</h1>
+  <p class="lead">ミリプロ全タレントの配信予定を、今日のタイムラインと週間カレンダーで一元表示する非公式ファンプロトタイプ。サーバーなしで動く静的版です。</p>
+  <span class="unofficial">非公式ファンプロトタイプ</span>
+  <div class="notice"><strong>この版の特徴：</strong> このページは1つのHTMLファイルだけで動きます。下の「このファイルをダウンロード」から保存して、そのまま人に送ったり、自分のサーバー／GitHub Pagesなどに置けます。予定データは開いている間のメモリにだけ保持され、サーバーには送られません。</div>
+  <div class="toolbar">
+    <button class="btn btn-primary" id="btnDownloadHtml" type="button">⬇ このファイルをダウンロード</button>
+    <button class="btn" id="btnInstall" type="button" hidden="">📲 ホーム画面に追加（インストール）</button>
+    <button class="btn" id="btnExportAll" type="button">📅 全予定を .ics で書き出す</button>
+  </div>
+  <p class="hint" id="installHint">インストールボタンが出ない場合は、ブラウザのメニューから「ホーム画面に追加」を選んでください。iPhoneは共有ボタン →「ホーム画面に追加」です。</p>
+</header>
+
+<main>
+  <div class="banner" id="reminderBanner" role="status"></div>
+  <div id="toastWrap"></div>
+  <div id="verifyWrap"></div>
+
+  <section class="card" aria-label="今日のミリプロ">
+    <h2>今日のミリプロ</h2>
+    <div id="todaySummary" class="summary-lines"><p>今日は全4件の予定があり、4名のタレントが配信予定です。</p><p>最初の予定は 02:00 から、ゆらぎゆら「リクエスト歌枠（サンプル）」です。</p><p>注目は 02:00 のゆらぎゆら「リクエスト歌枠（サンプル）」（歌枠）です。</p></div>
+  </section>
+
+  <section class="card" aria-label="表示と絞り込み">
+    <div class="controls">
+      <div class="seg" role="tablist" aria-label="表示切替">
+        <button id="btnTimeline" class="active" type="button">今日のタイムライン</button>
+        <button id="btnWeek" type="button">週間カレンダー</button>
+      </div>
+      <label class="check"><input type="checkbox" id="favOnlyFilter"> 推しだけ表示</label>
+      <label class="select-wrap">グループ
+        <select id="groupFilter"><option value="">すべて</option><option value="ミリプロ0期生">ミリプロ0期生</option><option value="ミリプロSONA">ミリプロSONA</option><option value="ミリプロNOVA">ミリプロNOVA</option><option value="ミリプロ3期生">ミリプロ3期生</option><option value="ミリプロUNI">ミリプロUNI</option></select>
+      </label>
+      <button id="btnDeleteSamples" class="btn btn-small btn-danger" type="button">サンプル予定を全削除</button>
+    </div>
+  </section>
+
+  <section class="card" aria-label="タレント一覧">
+    <h2>タレント <span class="sub">— ★で推し設定（この端末・このセッション内のみ）</span></h2>
+    <div id="talentList" class="talent-list"><span class="talent-chip"><span class="dot" style="background:#e879a6"></span><span>甘狼このみ <span class="t-group">ミリプロ0期生</span></span><button type="button" class="star" aria-label="甘狼このみを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#38bdf8"></span><span>音ノ乃のの <span class="t-group">ミリプロSONA</span></span><button type="button" class="star" aria-label="音ノ乃ののを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#a78bfa"></span><span>あくび・でもんすぺーど <span class="t-group">ミリプロSONA</span></span><button type="button" class="star" aria-label="あくび・でもんすぺーどを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#34d399"></span><span>鹿乃まほろ <span class="t-group">ミリプロSONA</span></span><button type="button" class="star" aria-label="鹿乃まほろを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#fb923c"></span><span>音ノ瀬らこ <span class="t-group">ミリプロNOVA</span></span><button type="button" class="star" aria-label="音ノ瀬らこを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#22a8c8"></span><span>ゆらぎゆら <span class="t-group">ミリプロNOVA</span></span><button type="button" class="star" aria-label="ゆらぎゆらを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#f472b6"></span><span>虹深°ぬふ <span class="t-group">ミリプロNOVA</span></span><button type="button" class="star" aria-label="虹深°ぬふを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#5b8def"></span><span>海琳あおい <span class="t-group">ミリプロNOVA</span></span><button type="button" class="star" aria-label="海琳あおいを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#d9a400"></span><span>小廻こま <span class="t-group">ミリプロ3期生</span></span><button type="button" class="star" aria-label="小廻こまを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#8494a3"></span><span>眠雲ツクリ <span class="t-group">ミリプロUNI</span></span><button type="button" class="star" aria-label="眠雲ツクリを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#818cf8"></span><span>雨夜リズ <span class="t-group">ミリプロUNI</span></span><button type="button" class="star" aria-label="雨夜リズを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#f06060"></span><span>夕霧レイ <span class="t-group">ミリプロUNI</span></span><button type="button" class="star" aria-label="夕霧レイを推しに設定">☆</button></span><span class="talent-chip"><span class="dot" style="background:#3cb371"></span><span>旋風マヨイ <span class="t-group">ミリプロUNI</span></span><button type="button" class="star" aria-label="旋風マヨイを推しに設定">☆</button></span></div>
+  </section>
+
+  <section id="timelineView" aria-label="今日のタイムライン">
+    <h2 class="section-title">今日のタイムライン <span id="timelineDate" class="date">｜11/21（土）</span></h2>
+    <div id="timelineList" class="event-list"><article class="event-card" style="border-left-color: rgb(34, 168, 200);"><div class="event-head"><span class="e-time">02:00</span><span class="e-title">リクエスト歌枠（サンプル）</span><span class="badge badge-up">Upcoming</span> <span class="badge badge-sample">サンプル</span></div><div class="event-meta"><span>ゆらぎゆら（ミリプロNOVA）</span><span>歌枠</span><span>60分</span><span>15分前リマインド</span></div><div class="event-actions"><a class="btn btn-small" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E6%AD%8C%E6%9E%A0%EF%BC%88%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%EF%BC%89&amp;dates=20261120T170000Z/20261120T180000Z&amp;details=%E3%83%9F%E3%83%AA%E3%83%97%E3%83%AD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC%E9%9D%99%E7%9A%84%E7%89%88%EF%BC%88%E9%9D%9E%E5%85%AC%E5%BC%8F%EF%BC%89%E3%81%8B%E3%82%89%E3%81%AE%E7%99%BB%E9%8C%B2" target="_blank" rel="noopener">Googleカレンダーに追加</a><button class="btn btn-small" type="button">.ics</button><button class="btn btn-small" type="button">編集</button><button class="btn btn-small" type="button">削除</button></div></article><article class="event-card" style="border-left-color: rgb(232, 121, 166);"><div class="event-head"><span class="e-time">18:00</span><span class="e-title">ミリプロ公式ショート（サンプル）</span><span class="badge badge-up">Upcoming</span> <span class="badge badge-sample">サンプル</span></div><div class="event-meta"><span>甘狼このみ（ミリプロ0期生）</span><span>Shorts</span><span>5分</span><span>15分前リマインド</span><span>公式チャンネルのサンプル予定</span></div><div class="event-actions"><a class="btn btn-small" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E3%83%9F%E3%83%AA%E3%83%97%E3%83%AD%E5%85%AC%E5%BC%8F%E3%82%B7%E3%83%A7%E3%83%BC%E3%83%88%EF%BC%88%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%EF%BC%89&amp;dates=20261121T090000Z/20261121T090500Z&amp;details=%E3%83%9F%E3%83%AA%E3%83%97%E3%83%AD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC%E9%9D%99%E7%9A%84%E7%89%88%EF%BC%88%E9%9D%9E%E5%85%AC%E5%BC%8F%EF%BC%89%E3%81%8B%E3%82%89%E3%81%AE%E7%99%BB%E9%8C%B2" target="_blank" rel="noopener">Googleカレンダーに追加</a><button class="btn btn-small" type="button">.ics</button><button class="btn btn-small" type="button">編集</button><button class="btn btn-small" type="button">削除</button></div></article><article class="event-card" style="border-left-color: rgb(251, 146, 60);"><div class="event-head"><span class="e-time">21:00</span><span class="e-title">高音チャレンジ歌枠（サンプル）</span><span class="badge badge-up">Upcoming</span> <span class="badge badge-sample">サンプル</span></div><div class="event-meta"><span>音ノ瀬らこ（ミリプロNOVA）</span><span>歌枠</span><span>60分</span><span>15分前リマインド</span></div><div class="event-actions"><a class="btn btn-small" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E9%AB%98%E9%9F%B3%E3%83%81%E3%83%A3%E3%83%AC%E3%83%B3%E3%82%B8%E6%AD%8C%E6%9E%A0%EF%BC%88%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%EF%BC%89&amp;dates=20261121T120000Z/20261121T130000Z&amp;details=%E3%83%9F%E3%83%AA%E3%83%97%E3%83%AD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC%E9%9D%99%E7%9A%84%E7%89%88%EF%BC%88%E9%9D%9E%E5%85%AC%E5%BC%8F%EF%BC%89%E3%81%8B%E3%82%89%E3%81%AE%E7%99%BB%E9%8C%B2" target="_blank" rel="noopener">Googleカレンダーに追加</a><button class="btn btn-small" type="button">.ics</button><button class="btn btn-small" type="button">編集</button><button class="btn btn-small" type="button">削除</button></div></article><article class="event-card" style="border-left-color: rgb(217, 164, 0);"><div class="event-head"><span class="e-time">22:00</span><span class="e-title">気になるお菓子を食べる配信（サンプル）</span><span class="badge badge-change">時間変更</span> <span class="badge badge-sample">サンプル</span></div><div class="event-meta"><span>小廻こま（ミリプロ3期生）</span><span>通常配信</span><span>45分</span><span>15分前リマインド</span></div><div class="event-actions"><a class="btn btn-small" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E6%B0%97%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8A%E8%8F%93%E5%AD%90%E3%82%92%E9%A3%9F%E3%81%B9%E3%82%8B%E9%85%8D%E4%BF%A1%EF%BC%88%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%EF%BC%89&amp;dates=20261121T130000Z/20261121T134500Z&amp;details=%E3%83%9F%E3%83%AA%E3%83%97%E3%83%AD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC%E9%9D%99%E7%9A%84%E7%89%88%EF%BC%88%E9%9D%9E%E5%85%AC%E5%BC%8F%EF%BC%89%E3%81%8B%E3%82%89%E3%81%AE%E7%99%BB%E9%8C%B2" target="_blank" rel="noopener">Googleカレンダーに追加</a><button class="btn btn-small" type="button">.ics</button><button class="btn btn-small" type="button">編集</button><button class="btn btn-small" type="button">削除</button></div></article></div>
+  </section>
+
+  <section id="weekView" class="hidden" aria-label="週間カレンダー">
+    <h2 class="section-title">週間カレンダー <span id="weekRange" class="date">｜11/16（月） 〜 11/22（日）</span></h2>
+    <div id="weekGrid" class="week-grid"><div class="week-day"><h3>11/16（月）</h3><div class="hint">予定なし</div></div><div class="week-day"><h3>11/17（火）</h3><div class="hint">予定なし</div></div><div class="week-day"><h3>11/18（水）</h3><div class="hint">予定なし</div></div><div class="week-day"><h3>11/19（木）</h3><div class="hint">予定なし</div></div><div class="week-day"><h3>11/20（金）</h3><button type="button" class="week-event" style="border-left-color: rgb(232, 121, 166);"><span class="wt">20:00</span> 甘狼このみ<br>昨日のアーカイブ風サンプル配信</button></div><div class="week-day today"><h3>11/21（土）（今日）</h3><button type="button" class="week-event" style="border-left-color: rgb(34, 168, 200);"><span class="wt">02:00</span> ゆらぎゆら<br>リクエスト歌枠（サンプル）</button><button type="button" class="week-event" style="border-left-color: rgb(232, 121, 166);"><span class="wt">18:00</span> 甘狼このみ<br>ミリプロ公式ショート（サンプル）</button><button type="button" class="week-event" style="border-left-color: rgb(251, 146, 60);"><span class="wt">21:00</span> 音ノ瀬らこ<br>高音チャレンジ歌枠（サンプル）</button><button type="button" class="week-event" style="border-left-color: rgb(217, 164, 0);"><span class="wt">22:00</span> 小廻こま<br>気になるお菓子を食べる配信（サンプル）（時間変更）</button></div><div class="week-day"><h3>11/22（日）</h3><button type="button" class="week-event" style="border-left-color: rgb(56, 189, 248);"><span class="wt">19:00</span> 音ノ乃のの<br>歌ってみたプレミア公開（サンプル）</button><button type="button" class="week-event" style="border-left-color: rgb(132, 148, 163);"><span class="wt">20:00</span> 眠雲ツクリ<br>ホラーゲーム実況（サンプル）</button><button type="button" class="week-event" style="border-left-color: rgb(129, 140, 248);"><span class="wt">21:30</span> 雨夜リズ<br>雨夜リズ×眠雲ツクリ コラボ配信（サンプル）</button></div></div>
+  </section>
+
+  <section class="card" aria-label="予定の追加・編集">
+    <h2 id="formTitle">予定を追加</h2>
+    <form id="eventForm">
+      <input type="hidden" id="fId">
+      <div class="form-grid">
+        <label>タイトル <input id="fTitle" type="text" required="" maxlength="120" placeholder="例：リクエスト歌枠"></label>
+        <label>タレント <select id="fTalent" required=""><option value="konomi">甘狼このみ（ミリプロ0期生）</option><option value="nono">音ノ乃のの（ミリプロSONA）</option><option value="akubi">あくび・でもんすぺーど（ミリプロSONA）</option><option value="mahoro">鹿乃まほろ（ミリプロSONA）</option><option value="raco">音ノ瀬らこ（ミリプロNOVA）</option><option value="yura">ゆらぎゆら（ミリプロNOVA）</option><option value="nufu">虹深°ぬふ（ミリプロNOVA）</option><option value="aoi">海琳あおい（ミリプロNOVA）</option><option value="koma">小廻こま（ミリプロ3期生）</option><option value="tsukuri">眠雲ツクリ（ミリプロUNI）</option><option value="liz">雨夜リズ（ミリプロUNI）</option><option value="ray">夕霧レイ（ミリプロUNI）</option><option value="mayoi">旋風マヨイ（ミリプロUNI）</option></select></label>
+        <label>日付 <input id="fDate" type="date" required=""></label>
+        <label>開始時刻 <input id="fTime" type="time" required=""></label>
+        <label>長さ（分） <input id="fDuration" type="number" min="5" max="1440" step="5" value="60" required=""></label>
+        <label>種類
+          <select id="fType"><option>通常配信</option><option>歌枠</option><option>ゲーム</option><option>コラボ</option><option>Shorts</option><option>記念配信</option></select>
+        </label>
+        <label>状態
+          <select id="fStatus"><option>予定</option><option>時間変更</option><option>お休み</option></select>
+        </label>
+        <label>URL <input id="fUrl" type="url" placeholder="https://www.youtube.com/..."></label>
+        <label class="check"><input type="checkbox" id="fReminder" checked=""> 開始15分前に知らせる</label>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">保存する</button>
+        <button class="btn" id="btnCancelEdit" type="button">編集をやめる</button>
+      </div>
+      <p class="hint">静的版のため、保存した予定はこのページを開いている間だけ保持されます。残したい予定は .ics で書き出して Google カレンダー等に入れてください。</p>
+    </form>
+  </section>
+
+  <section class="card" aria-label="AI取り込み">
+    <h2>AI取り込み <span class="sub">— 投稿文から予定を読み取る（ブラウザ内処理）</span></h2>
+    <p class="hint">Xの告知投稿の文章を貼ると、タレント・日付・時刻・時間変更／ゲリラ／お休みを読み取って候補を作ります。外部サーバーには送信しません。内容を確認してから登録してください。</p>
+    <textarea id="aiInput" rows="5" placeholder="例：本日20時から予定していた歌枠ですが、21時30分に変更します！ ゆらぎゆら"></textarea>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btnParse" type="button">読み取る</button>
+    </div>
+    <div id="aiPreview" class="ai-preview hidden"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <h2 style="font-size:1rem">週間スケジュール画像 <span class="sub">— プレビュー</span></h2>
+    <p class="hint">タレントが投稿する週間スケジュール画像を選ぶとプレビューを表示します。静的版では画像からの自動文字読み取り（OCR）は行わず、見ながら下のフォームで登録する使い方を想定しています。</p>
+    <input type="file" id="imgInput" accept="image/*">
+    <div id="imgWrap"></div>
+  </section>
+
+  <section class="card" aria-label="通知設定">
+    <h2>通知設定 <span class="sub">— 静的版は端末側の簡易通知です</span></h2>
+    <p class="hint">サーバーがない静的版では、離れていても届くサーバーPushは使えません。その代わり、このページを開いている間、リマインドを付けた予定の開始15分前になるとブラウザ通知と画面内バナーで知らせます。確実に残したい場合は .ics の15分前アラームをご利用ください。iPhoneの通知はホーム画面に追加してから（iOS 16.4以降）有効になります。</p>
+    <ul class="status-list">
+      <li>通知の許可：<strong id="notifPermission">未設定</strong></li>
+      <li>PWAマニフェスト：<strong id="manifestStatus">生成済み（このファイル内で完結）</strong></li>
+      <li>Service Worker：<strong id="swStatus">静的1ファイルでは登録できない環境です（httpsで単独ファイルとして配信すると登録できる場合があります）</strong></li>
+      <li>15分前チェック：<strong id="reminderStatus">ページを開いている間、30秒ごとに確認中</strong></li>
+    </ul>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btnRequestNotif" type="button">通知を許可する</button>
+      <button class="btn" id="btnTestNotif" type="button">テスト通知を送る</button>
+    </div>
+    <p id="pushMessage" class="hint" role="status"></p>
+  </section>
+
+  <section class="card" aria-label="静的版と実プロジェクト版の違い">
+    <h2>この静的版でできること／できないこと</h2>
+    <div class="kv">
+      <div><b>⬇ ダウンロードして送れる</b><span>HTMLファイル1つで完結。ダウンロードしてそのまま渡せます。</span></div>
+      <div><b>🔔 通知は端末側のみ</b><span>ページを開いている間の15分前通知。サーバーPushはありません。</span></div>
+      <div><b>💾 保存はセッション内</b><span>予定は開いている間だけ保持。長期保存は .ics 書き出しで。</span></div>
+      <div><b>🚀 本格運用は実プロジェクト版</b><span>Vercel等にデプロイする版ではサーバーPushとデータ保存が使えます。</span></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>ミリプロカレンダー静的PWA版｜非公式ファンプロトタイプ（株式会社Million Production公式のアプリではありません）</p>
+  <p>予定はサンプル／手入力／AI取り込み（投稿文）で登録する仕組みです。実在の配信予定とは限りません。</p>
+</footer>
+</div>
+
+<script>
+'use strict';
+/* ===== タレント定義 ===== */
+var TALENTS=[
+{id:'konomi',name:'甘狼このみ',group:'ミリプロ0期生',color:'#e879a6',aliases:['このみ']},
+{id:'nono',name:'音ノ乃のの',group:'ミリプロSONA',color:'#38bdf8',aliases:['のの']},
+{id:'akubi',name:'あくび・でもんすぺーど',group:'ミリプロSONA',color:'#a78bfa',aliases:['あくび']},
+{id:'mahoro',name:'鹿乃まほろ',group:'ミリプロSONA',color:'#34d399',aliases:['まほろ']},
+{id:'raco',name:'音ノ瀬らこ',group:'ミリプロNOVA',color:'#fb923c',aliases:['らこ']},
+{id:'yura',name:'ゆらぎゆら',group:'ミリプロNOVA',color:'#22a8c8',aliases:['ゆら']},
+{id:'nufu',name:'虹深°ぬふ',group:'ミリプロNOVA',color:'#f472b6',aliases:['ぬふ']},
+{id:'aoi',name:'海琳あおい',group:'ミリプロNOVA',color:'#5b8def',aliases:['あおい']},
+{id:'koma',name:'小廻こま',group:'ミリプロ3期生',color:'#d9a400',aliases:['こま']},
+{id:'tsukuri',name:'眠雲ツクリ',group:'ミリプロUNI',color:'#8494a3',aliases:['ツクリ']},
+{id:'liz',name:'雨夜リズ',group:'ミリプロUNI',color:'#818cf8',aliases:['リズ']},
+{id:'ray',name:'夕霧レイ',group:'ミリプロUNI',color:'#f06060',aliases:['レイ']},
+{id:'mayoi',name:'旋風マヨイ',group:'ミリプロUNI',color:'#3cb371',aliases:['マヨイ']}
+];
+function talentById(id){for(var i=0;i<TALENTS.length;i++){if(TALENTS[i].id===id)return TALENTS[i];}return TALENTS[0];}
+/* ===== 日付 ===== */
+function pad(n){return String(n).padStart(2,'0');}
+function dateKey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function todayKey(){return dateKey(new Date());}
+function parseKey(k){var p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function eventStart(ev){var d=parseKey(ev.date);var t=ev.time.split(':').map(Number);d.setHours(t[0]||0,t[1]||0,0,0);return d;}
+function eventEnd(ev){return new Date(eventStart(ev).getTime()+(Number(ev.duration)||60)*60000);}
+function fmtDateJP(k){var d=parseKey(k);return (d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'[d.getDay()]+'）';}
+function uid(){return 'ev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+/* ===== サンプル予定（閲覧日基準） ===== */
+function generateSamples(){
+  var now=new Date(),t0=dateKey(now),t1=dateKey(addDays(now,1)),t2=dateKey(addDays(now,2)),tm1=dateKey(addDays(now,-1));
+  var later=pad(Math.min(now.getHours()+2,22));
+  function mk(date,time,talentId,title,type,duration,status,note){return{id:uid()+Math.random().toString(36).slice(2,5),date:date,time:time,talentId:talentId,title:title,type:type||'通常配信',duration:duration||60,status:status||'予定',url:'',reminder:true,sample:true,note:note||''};}
+  return[
+    mk(tm1,'20:00','konomi','昨日のアーカイブ風サンプル配信','ゲーム',90),
+    mk(t0,'18:00','konomi','ミリプロ公式ショート（サンプル）','Shorts',5,'予定','公式チャンネルのサンプル予定'),
+    mk(t0,later+':00','yura','リクエスト歌枠（サンプル）','歌枠',60),
+    mk(t0,'21:00','raco','高音チャレンジ歌枠（サンプル）','歌枠',60),
+    mk(t0,'22:00','koma','気になるお菓子を食べる配信（サンプル）','通常配信',45,'時間変更'),
+    mk(t1,'19:00','nono','歌ってみたプレミア公開（サンプル）','通常配信',30),
+    mk(t1,'20:00','tsukuri','ホラーゲーム実況（サンプル）','ゲーム',90),
+    mk(t1,'21:30','liz','雨夜リズ×眠雲ツクリ コラボ配信（サンプル）','コラボ',60),
+    mk(t2,'20:00','aoi','一人合唱チャレンジ（サンプル）','歌枠',60),
+    mk(t2,'21:00','mayoi','旋風マヨイ 雑談配信（サンプル）','通常配信',60)
+  ];
+}
+/* ===== 状態（メモリ内のみ・保存しません） ===== */
+var events=generateSamples();
+var favorites=new Set();
+var notified=new Set();
+/* ===== フィルタ ===== */
+var favOnlyEl=document.getElementById('favOnlyFilter');
+var groupEl=document.getElementById('groupFilter');
+Array.from(new Set(TALENTS.map(function(t){return t.group;}))).forEach(function(g){var o=document.createElement('option');o.value=g;o.textContent=g;groupEl.appendChild(o);});
+function visible(list){return list.filter(function(ev){if(favOnlyEl.checked&&!favorites.has(ev.talentId))return false;if(groupEl.value&&talentById(ev.talentId).group!==groupEl.value)return false;return true;});}
+/* ===== 状態判定 ===== */
+function liveState(ev){if(ev.status==='お休み')return 'off';var n=new Date();if(n>=eventStart(ev)&&n<eventEnd(ev))return 'live';if(n<eventStart(ev))return 'upcoming';return 'past';}
+function stateBadge(ev){var s=liveState(ev);if(ev.status==='お休み')return '<span class="badge badge-off">お休み</span>';if(ev.status==='時間変更')return '<span class="badge badge-change">時間変更</span>'+(s==='live'?' <span class="badge badge-live">LIVE</span>':'');if(s==='live')return '<span class="badge badge-live">LIVE</span>';if(s==='upcoming')return '<span class="badge badge-up">Upcoming</span>';return '<span class="badge">終了</span>';}
+/* ===== ICS / Googleカレンダー ===== */
+function toUTC(d){return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z';}
+function googleUrl(ev){var dates=toUTC(eventStart(ev))+'/'+toUTC(eventEnd(ev));var details=encodeURIComponent('ミリプロカレンダー静的版（非公式）からの登録'+(ev.url?'\n'+ev.url:''));return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(ev.title)+'&dates='+dates+'&details='+details;}
+function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function icsFor(list){
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//miripro-calendar-static//JP'];
+  list.forEach(function(ev){lines.push('BEGIN:VEVENT','UID:'+ev.id+'@miripro-calendar-static','DTSTAMP:'+toUTC(new Date()),'DTSTART:'+toUTC(eventStart(ev)),'DTEND:'+toUTC(eventEnd(ev)),'SUMMARY:'+icsEsc(ev.title+'｜'+talentById(ev.talentId).name),'DESCRIPTION:'+icsEsc('ミリプロカレンダー静的版（非公式）'+(ev.url?'\n'+ev.url:'')),ev.url?'URL:'+ev.url:'','BEGIN:VALARM','TRIGGER:-PT15M','ACTION:DISPLAY','DESCRIPTION:開始15分前です','END:VALARM','END:VEVENT');});
+  lines.push('END:VCALENDAR');return lines.filter(Boolean).join('\r\n');
+}
+function downloadBlob(content,type,name){var b=new Blob([content],{type:type});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},2000);}
+/* ===== 描画 ===== */
+function esc(s){var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;}
+function toast(msg){var w=document.getElementById('toastWrap');var el=document.createElement('div');el.className='toast';el.textContent=msg;w.innerHTML='';w.appendChild(el);setTimeout(function(){el.remove();},3600);}
+function askYesNo(msg){return new Promise(function(res){var w=document.getElementById('verifyWrap');w.innerHTML='<div class="modal-back"><div class="modal-box"><p>'+esc(msg)+'</p><div class="form-actions" style="margin-top:0"><button class="btn btn-primary" id="cfOk" type="button">削除する</button><button class="btn" id="cfCancel" type="button">キャンセル</button></div></div></div>';document.getElementById('cfOk').addEventListener('click',function(){w.innerHTML='';res(true);});document.getElementById('cfCancel').addEventListener('click',function(){w.innerHTML='';res(false);});});}
+function renderTalents(){
+  var w=document.getElementById('talentList');w.innerHTML='';
+  TALENTS.forEach(function(t){
+    var chip=document.createElement('span');chip.className='talent-chip';
+    chip.innerHTML='<span class="dot" style="background:'+t.color+'"></span><span>'+esc(t.name)+' <span class="t-group">'+esc(t.group)+'</span></span>';
+    var star=document.createElement('button');star.type='button';star.className='star'+(favorites.has(t.id)?' on':'');star.textContent=favorites.has(t.id)?'★':'☆';star.setAttribute('aria-label',t.name+'を推しに設定');
+    star.addEventListener('click',function(){if(favorites.has(t.id))favorites.delete(t.id);else favorites.add(t.id);renderAll();});
+    chip.appendChild(star);w.appendChild(chip);
+  });
+}
+function eventCard(ev){
+  var t=talentById(ev.talentId);var card=document.createElement('article');card.className='event-card';card.style.borderLeftColor=t.color;
+  card.innerHTML='<div class="event-head"><span class="e-time">'+esc(ev.time)+'</span><span class="e-title">'+esc(ev.title)+'</span>'+stateBadge(ev)+(ev.sample?' <span class="badge badge-sample">サンプル</span>':'')+'</div>'+
+  '<div class="event-meta"><span>'+esc(t.name)+'（'+esc(t.group)+'）</span><span>'+esc(ev.type)+'</span><span>'+(Number(ev.duration)||60)+'分</span>'+(ev.reminder?'<span>15分前リマインド</span>':'')+(ev.note?'<span>'+esc(ev.note)+'</span>':'')+'</div>';
+  var act=document.createElement('div');act.className='event-actions';
+  if(ev.url){var a=document.createElement('a');a.className='btn btn-small';a.href=ev.url;a.target='_blank';a.rel='noopener';a.textContent='配信を開く';act.appendChild(a);}
+  var g=document.createElement('a');g.className='btn btn-small';g.href=googleUrl(ev);g.target='_blank';g.rel='noopener';g.textContent='Googleカレンダーに追加';act.appendChild(g);
+  var ics=document.createElement('button');ics.className='btn btn-small';ics.type='button';ics.textContent='.ics';ics.addEventListener('click',function(){downloadBlob(icsFor([ev]),'text/calendar;charset=utf-8','miripro_'+ev.date+'_'+t.id+'.ics');});act.appendChild(ics);
+  var ed=document.createElement('button');ed.className='btn btn-small';ed.type='button';ed.textContent='編集';ed.addEventListener('click',function(){fillForm(ev);});act.appendChild(ed);
+  var del=document.createElement('button');del.className='btn btn-small';del.type='button';del.textContent='削除';del.addEventListener('click',function(){askYesNo('この予定を削除しますか？').then(function(ok){if(ok){events=events.filter(function(e){return e.id!==ev.id;});renderAll();toast('予定を削除しました。');}});});act.appendChild(del);
+  card.appendChild(act);return card;
+}
+function renderTimeline(){
+  document.getElementById('timelineDate').textContent='｜'+fmtDateJP(todayKey());
+  var list=visible(events.filter(function(e){return e.date===todayKey();})).sort(function(a,b){return a.time.localeCompare(b.time);});
+  var w=document.getElementById('timelineList');w.innerHTML='';
+  if(!list.length){w.innerHTML='<div class="empty">今日の予定はまだありません。下のフォームかAI取り込みで追加できます。</div>';return;}
+  list.forEach(function(ev){w.appendChild(eventCard(ev));});
+}
+function renderWeek(){
+  var now=new Date();var monday=addDays(new Date(now.getFullYear(),now.getMonth(),now.getDate()),-((now.getDay()+6)%7));var sunday=addDays(monday,6);
+  document.getElementById('weekRange').textContent='｜'+fmtDateJP(dateKey(monday))+' 〜 '+fmtDateJP(dateKey(sunday));
+  var grid=document.getElementById('weekGrid');grid.innerHTML='';
+  for(var i=0;i<7;i++){
+    var day=addDays(monday,i),key=dateKey(day);var col=document.createElement('div');col.className='week-day'+(key===todayKey()?' today':'');
+    col.innerHTML='<h3>'+fmtDateJP(key)+(key===todayKey()?'（今日）':'')+'</h3>';
+    var de=visible(events.filter(function(e){return e.date===key;})).sort(function(a,b){return a.time.localeCompare(b.time);});
+    if(!de.length)col.innerHTML+='<div class="hint">予定なし</div>';
+    de.forEach(function(ev){var t=talentById(ev.talentId);var b=document.createElement('button');b.type='button';b.className='week-event';b.style.borderLeftColor=t.color;b.innerHTML='<span class="wt">'+esc(ev.time)+'</span> '+esc(t.name)+'<br>'+esc(ev.title)+(ev.status!=='予定'?'（'+esc(ev.status)+'）':'');b.addEventListener('click',function(){fillForm(ev);});col.appendChild(b);});
+    grid.appendChild(col);
+  }
+}
+function renderSummary(){
+  var todays=events.filter(function(e){return e.date===todayKey()&&e.status!=='お休み';}).sort(function(a,b){return a.time.localeCompare(b.time);});
+  var names=Array.from(new Set(todays.map(function(e){return talentById(e.talentId).name;})));
+  var live=todays.filter(function(e){return liveState(e)==='live';});
+  var fav=todays.filter(function(e){return favorites.has(e.talentId);});
+  var lines=[];
+  if(!todays.length){lines=['今日の配信予定はまだ登録がありません。','下のフォームか「AI取り込み」で予定を追加すると、ここに要約が出ます。','推しを★で設定しておくと、推しの予定が優先して分かるようになります。'];}
+  else{
+    lines.push('今日は全'+todays.length+'件の予定があり、'+names.length+'名のタレントが配信予定です。');
+    if(live.length)lines.push('ただいま配信中：'+live.map(function(e){return talentById(e.talentId).name+'「'+e.title+'」';}).join('、')+'。');
+    else lines.push('最初の予定は '+todays[0].time+' から、'+talentById(todays[0].talentId).name+'「'+todays[0].title+'」です。');
+    var sp=todays.filter(function(e){return e.type==='コラボ'||e.type==='記念配信'||e.type==='歌枠';});
+    if(fav.length)lines.push('あなたの推しの予定は '+fav.length+'件：'+fav.map(function(e){return e.time+' '+talentById(e.talentId).name;}).join('、')+'。');
+    else if(sp.length)lines.push('注目は '+sp[0].time+' の'+talentById(sp[0].talentId).name+'「'+sp[0].title+'」（'+sp[0].type+'）です。');
+    else lines.push('時間変更・お休みの予定はタイムラインで色分けして表示しています。');
+  }
+  document.getElementById('todaySummary').innerHTML=lines.slice(0,3).map(function(l){return '<p>'+esc(l)+'</p>';}).join('');
+}
+function renderAll(){renderTalents();renderTimeline();renderWeek();renderSummary();}
+/* ===== 表示切替 ===== */
+function setView(v){document.getElementById('btnTimeline').classList.toggle('active',v==='timeline');document.getElementById('btnWeek').classList.toggle('active',v==='week');document.getElementById('timelineView').classList.toggle('hidden',v!=='timeline');document.getElementById('weekView').classList.toggle('hidden',v!=='week');}
+document.getElementById('btnTimeline').addEventListener('click',function(){setView('timeline');});
+document.getElementById('btnWeek').addEventListener('click',function(){setView('week');});
+favOnlyEl.addEventListener('change',renderAll);groupEl.addEventListener('change',renderAll);
+document.getElementById('btnDeleteSamples').addEventListener('click',function(){var n=events.filter(function(e){return e.sample;}).length;if(!n){toast('サンプル予定はありません。');return;}askYesNo('サンプル予定 '+n+' 件をすべて削除しますか？（自分で追加した予定は残ります）').then(function(ok){if(ok){events=events.filter(function(e){return !e.sample;});renderAll();toast('サンプル予定を削除しました。');}});});
+/* ===== フォーム ===== */
+var talentSelect=document.getElementById('fTalent');
+TALENTS.forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name+'（'+t.group+'）';talentSelect.appendChild(o);});
+document.getElementById('fDate').value=todayKey();
+function fillForm(ev){document.getElementById('formTitle').textContent='予定を編集';document.getElementById('fId').value=ev.id;document.getElementById('fTitle').value=ev.title;talentSelect.value=ev.talentId;document.getElementById('fDate').value=ev.date;document.getElementById('fTime').value=ev.time;document.getElementById('fDuration').value=ev.duration||60;document.getElementById('fType').value=ev.type;document.getElementById('fStatus').value=ev.status;document.getElementById('fUrl').value=ev.url||'';document.getElementById('fReminder').checked=!!ev.reminder;document.getElementById('eventForm').scrollIntoView({behavior:'smooth'});}
+function resetForm(){document.getElementById('eventForm').reset();document.getElementById('fId').value='';document.getElementById('fDate').value=todayKey();document.getElementById('fDuration').value=60;document.getElementById('fReminder').checked=true;document.getElementById('formTitle').textContent='予定を追加';}
+document.getElementById('btnCancelEdit').addEventListener('click',resetForm);
+document.getElementById('eventForm').addEventListener('submit',function(e){e.preventDefault();var id=document.getElementById('fId').value;var data={title:document.getElementById('fTitle').value.trim(),talentId:talentSelect.value,date:document.getElementById('fDate').value,time:document.getElementById('fTime').value,duration:Number(document.getElementById('fDuration').value)||60,type:document.getElementById('fType').value,status:document.getElementById('fStatus').value,url:document.getElementById('fUrl').value.trim(),reminder:document.getElementById('fReminder').checked};if(!data.title||!data.date||!data.time){toast('タイトル・日付・開始時刻は必須です。');return;}if(id){var i=events.findIndex(function(x){return x.id===id;});if(i>=0)events[i]=Object.assign({},events[i],data,{sample:false});}else{events.push(Object.assign({id:uid(),sample:false,note:''},data));}resetForm();renderAll();toast('予定を保存しました（このセッション内のみ保持されます）。');});
+/* ===== AI取り込み（投稿文） ===== */
+function findTimes(text){var out=[];var re=/(\d{1,2})[:：](\d{2})|(\d{1,2})時(?:(\d{1,2})分)?/g;var m;while((m=re.exec(text))!==null){var h=Number(m[1]!==undefined?m[1]:m[3]);var min=Number(m[2]!==undefined?m[2]:(m[4]||0));if(h>=0&&h<=29&&min>=0&&min<=59)out.push(pad(h%24)+':'+pad(min));}return out;}
+function parsePost(text){
+  var r={talentId:'',date:todayKey(),time:'',duration:60,type:'通常配信',status:'予定',note:'',matched:null,warnings:[]};
+  for(var i=0;i<TALENTS.length;i++){var t=TALENTS[i];if(text.indexOf(t.name)>=0||t.aliases.some(function(a){return text.indexOf(a)>=0;})){r.talentId=t.id;break;}}
+  if(!r.talentId){r.warnings.push('タレント名が見つかりませんでした');r.talentId=TALENTS[0].id;}
+  var now=new Date();var dm=text.match(/(\d{1,2})[\/](\d{1,2})/)||text.match(/(\d{1,2})月(\d{1,2})日/);
+  if(dm){var cand=new Date(now.getFullYear(),Number(dm[1])-1,Number(dm[2]));if(cand.getTime()<parseKey(todayKey()).getTime()-86400000*30)cand.setFullYear(now.getFullYear()+1);r.date=dateKey(cand);}
+  else if(text.indexOf('明後日')>=0)r.date=dateKey(addDays(now,2));else if(text.indexOf('明日')>=0)r.date=dateKey(addDays(now,1));
+  var isChange=/時間変更|変更/.test(text),isOff=/お休み|休止|中止/.test(text),isG=/ゲリラ/.test(text);
+  if(isOff)r.status='お休み';else if(isChange)r.status='時間変更';
+  var times=findTimes(text);
+  if(times.length){var chosen=times[0];if(isChange){var idx=Math.max(text.lastIndexOf('→'),text.lastIndexOf('変更'));if(idx>=0){var after=findTimes(text.slice(idx));if(after.length)chosen=after[0];else if(times.length>1)chosen=times[times.length-1];}else if(times.length>1)chosen=times[times.length-1];if(times.length>1&&times[0]!==chosen)r.note='変更前 '+times[0]+' → 変更後 '+chosen;}r.time=chosen;}
+  else r.warnings.push('時刻が見つかりませんでした');
+  if(/歌枠|歌って/.test(text))r.type='歌枠';else if(/コラボ/.test(text))r.type='コラボ';else if(/Shorts|ショート/.test(text))r.type='Shorts';else if(/記念|周年|誕生日/.test(text))r.type='記念配信';else if(/ゲーム|マイクラ|実況/.test(text))r.type='ゲーム';
+  if(isG)r.note=(r.note?r.note+' / ':'')+'ゲリラ配信として検出';
+  var first=text.split(/\n/).map(function(s){return s.trim();}).filter(Boolean)[0]||'';
+  r.title=first.length>4?first.slice(0,80):talentById(r.talentId).name+' 配信';
+  r.matched=events.find(function(e){return e.talentId===r.talentId&&e.date===r.date;})||null;
+  return r;
+}
+var aiCandidate=null;
+document.getElementById('btnParse').addEventListener('click',function(){
+  var text=document.getElementById('aiInput').value.trim();var box=document.getElementById('aiPreview');
+  if(!text){toast('投稿文を貼ってください。');return;}
+  aiCandidate=parsePost(text);var t=talentById(aiCandidate.talentId);box.classList.remove('hidden');
+  box.innerHTML='<h3>候補プレビュー</h3><p>'+esc(t.name)+' ｜ '+esc(fmtDateJP(aiCandidate.date))+' '+esc(aiCandidate.time||'時刻不明')+' ｜ '+esc(aiCandidate.type)+' ｜ 状態：'+esc(aiCandidate.status)+'</p><p>タイトル候補：'+esc(aiCandidate.title)+'</p>'+(aiCandidate.note?'<p>'+esc(aiCandidate.note)+'</p>':'')+(aiCandidate.matched?'<p>登録済みの予定と照合しました：同じタレント・同じ日の予定があるため、適用するとその予定を更新します。</p>':'<p>同じタレント・同じ日の予定はないため、新規登録します。</p>')+(aiCandidate.warnings.length?'<p>注意：'+aiCandidate.warnings.map(esc).join(' / ')+'</p>':'');
+  var apply=document.createElement('button');apply.className='btn btn-primary';apply.type='button';apply.textContent='この内容で適用する';
+  apply.addEventListener('click',function(){
+    if(!aiCandidate.time){toast('時刻が読み取れなかったため、フォームから時刻を入れて保存してください。');document.getElementById('fTitle').value=aiCandidate.title;talentSelect.value=aiCandidate.talentId;document.getElementById('fDate').value=aiCandidate.date;document.getElementById('fType').value=aiCandidate.type;document.getElementById('fStatus').value=aiCandidate.status;document.getElementById('eventForm').scrollIntoView({behavior:'smooth'});return;}
+    if(aiCandidate.matched){var i=events.findIndex(function(e){return e.id===aiCandidate.matched.id;});events[i]=Object.assign({},events[i],{time:aiCandidate.time,status:aiCandidate.status,type:aiCandidate.type,note:aiCandidate.note||events[i].note,sample:false});}
+    else{events.push({id:uid(),title:aiCandidate.title,talentId:aiCandidate.talentId,date:aiCandidate.date,time:aiCandidate.time,duration:60,type:aiCandidate.type,status:aiCandidate.status,url:'',reminder:true,sample:false,note:aiCandidate.note});}
+    renderAll();box.innerHTML='<p>適用しました。タイムラインと「今日のミリプロ」に反映されています。</p>';aiCandidate=null;
+  });
+  box.appendChild(apply);
+});
+/* ===== 画像プレビュー ===== */
+document.getElementById('imgInput').addEventListener('change',function(e){
+  var f=e.target.files&&e.target.files[0];var w=document.getElementById('imgWrap');w.innerHTML='';
+  if(!f)return;var img=document.createElement('img');img.className='img-preview';img.alt='週間スケジュール画像のプレビュー';img.src=URL.createObjectURL(f);w.appendChild(img);
+  var p=document.createElement('p');p.className='hint';p.textContent='画像を確認しながら、上のフォームで予定を登録してください（静的版では自動OCRは行いません）。';w.appendChild(p);
+});
+/* ===== ダウンロード / 書き出し ===== */
+document.getElementById('btnDownloadHtml').addEventListener('click',function(){
+  var html='<!doctype html>\n'+document.documentElement.outerHTML;
+  downloadBlob(html,'text/html;charset=utf-8','miripro-calendar-static.html');
+});
+document.getElementById('btnExportAll').addEventListener('click',function(){
+  if(!events.length){toast('書き出す予定がありません。');return;}
+  downloadBlob(icsFor(events.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);})),'text/calendar;charset=utf-8','miripro_all.ics');
+});
+/* ===== PWA：マニフェスト生成 + インストール ===== */
+(function setupManifest(){
+  try{
+    var iconSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#0e7a6d"/><text x="256" y="330" font-size="240" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-weight="bold">ミ</text></svg>';
+    var iconUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(iconSvg);
+    var manifest={name:'ミリプロカレンダー静的PWA版',short_name:'ミリプロカレンダー',start_url:'.',scope:'.',display:'standalone',background_color:'#f6f5f1',theme_color:'#0e7a6d',lang:'ja',icons:[{src:iconUrl,sizes:'512x512',type:'image/svg+xml',purpose:'any'}]};
+    var blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+    var link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(blob);document.head.appendChild(link);
+    document.getElementById('manifestStatus').textContent='生成済み（このファイル内で完結）';
+  }catch(e){document.getElementById('manifestStatus').textContent='生成できませんでした';}
+})();
+(function setupSW(){
+  var el=document.getElementById('swStatus');
+  if(!('serviceWorker' in navigator)){el.textContent='このブラウザは未対応です';return;}
+  try{
+    var swCode="self.addEventListener('install',function(e){self.skipWaiting();});self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});self.addEventListener('fetch',function(e){});self.addEventListener('notificationclick',function(e){e.notification.close();e.waitUntil(self.clients.matchAll({type:'window'}).then(function(cs){if(cs.length)return cs[0].focus();return self.clients.openWindow('./');}));});";
+    var blob=new Blob([swCode],{type:'text/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).then(function(){el.textContent='登録済み';}).catch(function(){el.textContent='静的1ファイルでは登録できない環境です（httpsで単独ファイルとして配信すると登録できる場合があります）';});
+  }catch(e){el.textContent='登録できませんでした';}
+})();
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('btnInstall').hidden=false;document.getElementById('installHint').textContent='「ホーム画面に追加（インストール）」ボタンからインストールできます。';});
+document.getElementById('btnInstall').addEventListener('click',function(){if(!deferredPrompt)return;deferredPrompt['prompt']();deferredPrompt.userChoice.then(function(){deferredPrompt=null;document.getElementById('btnInstall').hidden=true;});});
+/* ===== 通知（端末側） ===== */
+function setNotifStatus(){document.getElementById('notifPermission').textContent=('Notification' in window)?({granted:'許可済み',denied:'拒否されています',default:'未設定'})[Notification.permission]||Notification.permission:'このブラウザは通知に未対応です';}
+function showBanner(msg){var b=document.getElementById('reminderBanner');b.textContent=msg;b.classList.add('show');}
+function fireNotification(title,body){
+  showBanner(title+' — '+body);
+  if('Notification' in window&&Notification.permission==='granted'){
+    if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(function(reg){if(reg&&reg.showNotification){reg.showNotification(title,{body:body});}else{new Notification(title,{body:body});}}).catch(function(){try{new Notification(title,{body:body});}catch(e){}});}
+    else{try{new Notification(title,{body:body});}catch(e){}}
+  }
+}
+document.getElementById('btnRequestNotif').addEventListener('click',function(){if(!('Notification' in window)){toast('このブラウザは通知に未対応です。');return;}Notification.requestPermission().then(setNotifStatus);});
+document.getElementById('btnTestNotif').addEventListener('click',function(){
+  var msg=document.getElementById('pushMessage');
+  if(!('Notification' in window)){msg.textContent='このブラウザは通知に未対応です。';return;}
+  function go(){fireNotification('ミリプロカレンダー｜テスト通知','通知はこのように届きます。推しの配信開始15分前にお知らせします。');msg.textContent='テスト通知を送りました（画面上部のバナーでも確認できます）。';}
+  if(Notification.permission==='granted')go();
+  else Notification.requestPermission().then(function(p){setNotifStatus();if(p==='granted')go();else msg.textContent='通知が許可されていません。ブラウザの設定で許可してください。';});
+});
+function checkReminders(){
+  var now=new Date();
+  events.forEach(function(ev){
+    if(!ev.reminder||ev.status==='お休み')return;
+    var diff=eventStart(ev).getTime()-now.getTime();
+    if(diff>13*60000&&diff<=15*60000&&!notified.has(ev.id)){notified.add(ev.id);fireNotification('まもなく配信開始｜'+talentById(ev.talentId).name,ev.time+'「'+ev.title+'」が約15分後に始まります。');}
+  });
+  renderSummary();
+}
+/* ===== 初期化 ===== */
+renderAll();setNotifStatus();
+setInterval(checkReminders,30000);
+setInterval(function(){renderTimeline();renderWeek();},60000);
+</script>
+
+
+</body></html>
